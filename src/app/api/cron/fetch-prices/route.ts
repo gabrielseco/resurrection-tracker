@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 
 // GraphQL query to fetch Resurrection Fest 2026 listings
 const GRAPHQL_QUERY = {
-	operationName: "GetEventTypeListings",
-	variables: {
-		id: "RXZlbnRUeXBlOjQ5OTc3Mjc=", // 4-day ticket ID
-	},
-	query: `
+  operationName: "GetEventTypeListings",
+  variables: {
+    id: "RXZlbnRUeXBlOjQ5OTc3Mjc=", // 4-day ticket ID
+  },
+  query: `
     query GetEventTypeListings($id: ID!) {
       node(id: $id) {
         ... on EventType {
@@ -33,211 +33,173 @@ const GRAPHQL_QUERY = {
 };
 
 interface Listing {
-	node: {
-		id: string;
-		numberOfAvailableTickets: number;
-		price: {
-			totalPrice: {
-				amount: string; // Price in cents
-				currency: string;
-			};
-		};
-	};
+  node: {
+    id: string;
+    numberOfAvailableTickets: number;
+    price: {
+      totalPrice: {
+        amount: string; // Price in cents
+        currency: string;
+      };
+    };
+  };
 }
 
 interface GraphQLResponse {
-	data: {
-		node: {
-			listings: {
-				edges: Listing[];
-			};
-		};
-	};
+  data: {
+    node: {
+      listings: {
+        edges: Listing[];
+      };
+    };
+  };
 }
 
 export async function GET(request: Request) {
-	try {
-		// Verify the request is coming from Vercel Cron
-		const authHeader = request.headers.get("authorization");
-		if (
-			process.env.CRON_SECRET &&
-			authHeader !== `Bearer ${process.env.CRON_SECRET}`
-		) {
-			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-		}
+  try {
+    // Verify the request is coming from Vercel Cron
+    const authHeader = request.headers.get("authorization");
+    if (
+      process.env.CRON_SECRET &&
+      authHeader !== `Bearer ${process.env.CRON_SECRET}`
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-		// Test mode - use mock data to avoid rate limiting during development
-		const url = new URL(request.url);
-		const testMode = url.searchParams.get("test") === "true";
+    console.log("[Cron] Fetching prices from TicketSwap...");
 
-		if (testMode) {
-			console.log("[Cron] TEST MODE - Using mock data");
-			const mockPrice = 198.38 + Math.random() * 20; // Random price between 198-218 EUR
+    // Fetch data from TicketSwap GraphQL API with retry logic
+    let response: Response | null = null;
+    let lastError: Error | null = null;
 
-			// Save to database
-			const saveResponse = await fetch(
-				`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/prices`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						id: `${Date.now()}-${Math.random()}`,
-						ticketType: "4-day",
-						price: Number(mockPrice.toFixed(2)),
-						notes: "TEST - Mock data",
-						date: new Date().toISOString().split("T")[0],
-					}),
-				},
-			);
+    // Retry up to 3 times with exponential backoff
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        response = await fetch(
+          "https://www.ticketswap.es/api/graphql/public?version=4",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "User-Agent":
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              Accept: "application/json",
+              "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+              Origin: "https://www.ticketswap.es",
+              Referer:
+                "https://www.ticketswap.es/event/resurrection-fest-2026/4-day-ticket-tickets/0a722a0d-6e0d-44a1-a134-0e42bc43f003/4997727",
+            },
+            body: JSON.stringify(GRAPHQL_QUERY),
+          }
+        );
 
-			if (!saveResponse.ok) {
-				throw new Error(`Failed to save price: ${saveResponse.status}`);
-			}
+        if (response.ok) {
+          break; // Success, exit retry loop
+        }
 
-			return NextResponse.json({
-				success: true,
-				testMode: true,
-				price: Number(mockPrice.toFixed(2)),
-				currency: "EUR",
-				message: "Test mode - mock data saved successfully",
-				timestamp: new Date().toISOString(),
-			});
-		}
+        // If rate limited, wait before retrying
+        if (response.status === 429) {
+          const waitTime = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+          console.log(
+            `[Cron] Rate limited, waiting ${waitTime}ms before retry...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+          continue;
+        }
 
-		console.log("[Cron] Fetching prices from TicketSwap...");
+        // Other errors, throw immediately
+        throw new Error(`TicketSwap API failed: ${response.status}`);
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error("Unknown error");
+        if (attempt === 2) break; // Last attempt, don't wait
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
 
-		// Fetch data from TicketSwap GraphQL API with retry logic
-		let response: Response | null = null;
-		let lastError: Error | null = null;
+    if (!response || !response.ok) {
+      throw new Error(
+        lastError?.message || `TicketSwap API failed: ${response?.status}`
+      );
+    }
 
-		// Retry up to 3 times with exponential backoff
-		for (let attempt = 0; attempt < 3; attempt++) {
-			try {
-				response = await fetch(
-					"https://www.ticketswap.es/api/graphql/public?version=4",
-					{
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-							"User-Agent":
-								"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-							Accept: "application/json",
-							"Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
-							Origin: "https://www.ticketswap.es",
-							Referer:
-								"https://www.ticketswap.es/event/resurrection-fest-2026/4-day-ticket-tickets/0a722a0d-6e0d-44a1-a134-0e42bc43f003/4997727",
-						},
-						body: JSON.stringify(GRAPHQL_QUERY),
-					},
-				);
+    const data: GraphQLResponse = await response.json();
 
-				if (response.ok) {
-					break; // Success, exit retry loop
-				}
+    // Extract listings from the response
+    if (!data?.data?.node?.listings) {
+      console.log("[Cron] No listings found");
+      return NextResponse.json({
+        success: true,
+        message: "No listings available",
+      });
+    }
 
-				// If rate limited, wait before retrying
-				if (response.status === 429) {
-					const waitTime = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-					console.log(
-						`[Cron] Rate limited, waiting ${waitTime}ms before retry...`,
-					);
-					await new Promise((resolve) => setTimeout(resolve, waitTime));
-					continue;
-				}
+    const listings = data.data.node.listings.edges;
 
-				// Other errors, throw immediately
-				throw new Error(`TicketSwap API failed: ${response.status}`);
-			} catch (error) {
-				lastError = error instanceof Error ? error : new Error("Unknown error");
-				if (attempt === 2) break; // Last attempt, don't wait
-				await new Promise((resolve) => setTimeout(resolve, 1000));
-			}
-		}
+    // Filter only available tickets and get the cheapest price
+    const availableListings = listings.filter(
+      (listing) => listing.node.numberOfAvailableTickets > 0
+    );
 
-		if (!response || !response.ok) {
-			throw new Error(
-				lastError?.message || `TicketSwap API failed: ${response?.status}`,
-			);
-		}
+    if (availableListings.length === 0) {
+      console.log("[Cron] No available tickets");
+      return NextResponse.json({
+        success: true,
+        message: "No available tickets",
+      });
+    }
 
-		const data: GraphQLResponse = await response.json();
+    // Find the cheapest price (amount is in cents)
+    const cheapestListing = availableListings.reduce((min, listing) =>
+      Number.parseInt(listing.node.price.totalPrice.amount) <
+      Number.parseInt(min.node.price.totalPrice.amount)
+        ? listing
+        : min
+    );
 
-		// Extract listings from the response
-		if (!data?.data?.node?.listings) {
-			console.log("[Cron] No listings found");
-			return NextResponse.json({
-				success: true,
-				message: "No listings available",
-			});
-		}
+    const priceInEuros =
+      Number.parseInt(cheapestListing.node.price.totalPrice.amount) / 100;
 
-		const listings = data.data.node.listings.edges;
+    console.log(`[Cron] Cheapest price found: €${priceInEuros}`);
 
-		// Filter only available tickets and get the cheapest price
-		const availableListings = listings.filter(
-			(listing) => listing.node.numberOfAvailableTickets > 0,
-		);
+    // Save to database via our existing API
+    const saveResponse = await fetch(
+      `${
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      }/api/prices`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: `${Date.now()}-${Math.random()}`,
+          ticketType: "4-day",
+          price: priceInEuros,
+          notes: "Auto-fetched from TicketSwap",
+          date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
+        }),
+      }
+    );
 
-		if (availableListings.length === 0) {
-			console.log("[Cron] No available tickets");
-			return NextResponse.json({
-				success: true,
-				message: "No available tickets",
-			});
-		}
+    if (!saveResponse.ok) {
+      throw new Error(`Failed to save price: ${saveResponse.status}`);
+    }
 
-		// Find the cheapest price (amount is in cents)
-		const cheapestListing = availableListings.reduce((min, listing) =>
-			Number.parseInt(listing.node.price.totalPrice.amount) <
-			Number.parseInt(min.node.price.totalPrice.amount)
-				? listing
-				: min,
-		);
-
-		const priceInEuros =
-			Number.parseInt(cheapestListing.node.price.totalPrice.amount) / 100;
-
-		console.log(`[Cron] Cheapest price found: €${priceInEuros}`);
-
-		// Save to database via our existing API
-		const saveResponse = await fetch(
-			`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/prices`,
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					id: `${Date.now()}-${Math.random()}`,
-					ticketType: "4-day",
-					price: priceInEuros,
-					notes: "Auto-fetched from TicketSwap",
-					date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
-				}),
-			},
-		);
-
-		if (!saveResponse.ok) {
-			throw new Error(`Failed to save price: ${saveResponse.status}`);
-		}
-
-		return NextResponse.json({
-			success: true,
-			price: priceInEuros,
-			currency: cheapestListing.node.price.totalPrice.currency,
-			availableTickets: availableListings.length,
-			timestamp: new Date().toISOString(),
-		});
-	} catch (error) {
-		console.error("[Cron] Error fetching prices:", error);
-		return NextResponse.json(
-			{
-				success: false,
-				error: error instanceof Error ? error.message : "Unknown error",
-			},
-			{ status: 500 },
-		);
-	}
+    return NextResponse.json({
+      success: true,
+      price: priceInEuros,
+      currency: cheapestListing.node.price.totalPrice.currency,
+      availableTickets: availableListings.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("[Cron] Error fetching prices:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
+  }
 }
