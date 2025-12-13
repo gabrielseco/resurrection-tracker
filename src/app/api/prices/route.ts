@@ -29,12 +29,22 @@ async function saveData(data: TicketData): Promise<void> {
 // GET - Fetch all prices
 export async function GET() {
   try {
+    // Check if Blob token is configured
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+      return NextResponse.json(
+        { error: "Blob storage not configured. Please add Blob storage in Vercel dashboard." },
+        { status: 500 }
+      );
+    }
+
     const data = await getData();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching prices:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error fetching prices:", errorMessage, error);
     return NextResponse.json(
-      { error: "Failed to fetch prices" },
+      { error: `Failed to fetch prices: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -43,6 +53,15 @@ export async function GET() {
 // POST - Add a new price
 export async function POST(request: Request) {
   try {
+    // Check if Blob token is configured
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+      return NextResponse.json(
+        { error: "Blob storage not configured. Please add Blob storage in Vercel dashboard." },
+        { status: 500 }
+      );
+    }
+
     const newPrice: TicketPrice = await request.json();
 
     // Get existing data
@@ -56,9 +75,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error adding price:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error adding price:", errorMessage, error);
     return NextResponse.json(
-      { error: "Failed to add price" },
+      { error: `Failed to add price: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -67,6 +87,15 @@ export async function POST(request: Request) {
 // DELETE - Remove a price by id
 export async function DELETE(request: Request) {
   try {
+    // Check if Blob token is configured
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+      return NextResponse.json(
+        { error: "Blob storage not configured. Please add Blob storage in Vercel dashboard." },
+        { status: 500 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
@@ -85,9 +114,10 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error deleting price:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error deleting price:", errorMessage, error);
     return NextResponse.json(
-      { error: "Failed to delete price" },
+      { error: `Failed to delete price: ${errorMessage}` },
       { status: 500 }
     );
   }
