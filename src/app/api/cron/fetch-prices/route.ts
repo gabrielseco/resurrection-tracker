@@ -1,28 +1,26 @@
 import { NextResponse } from "next/server";
 
 // GraphQL query to fetch Resurrection Fest 2026 listings
-const GRAPHQL_QUERY = [
-	{
-		operationName: "GetEventTypeListings",
-		variables: {
-			id: "RXZlbnRUeXBlOjQ5OTc3Mjc=", // 4-day ticket ID
-		},
-		query: `
-      query GetEventTypeListings($id: ID!) {
-        node(id: $id) {
-          ... on EventType {
-            id
-            title
-            listings(first: 50) {
-              edges {
-                node {
-                  id
-                  numberOfAvailableTickets
-                  price {
-                    totalPrice {
-                      amount
-                      currency
-                    }
+const GRAPHQL_QUERY = {
+	operationName: "GetEventTypeListings",
+	variables: {
+		id: "RXZlbnRUeXBlOjQ5OTc3Mjc=", // 4-day ticket ID
+	},
+	query: `
+    query GetEventTypeListings($id: ID!) {
+      node(id: $id) {
+        ... on EventType {
+          id
+          title
+          listings(first: 50) {
+            edges {
+              node {
+                id
+                numberOfAvailableTickets
+                price {
+                  totalPrice {
+                    amount
+                    currency
                   }
                 }
               }
@@ -30,9 +28,9 @@ const GRAPHQL_QUERY = [
           }
         }
       }
-    `,
-	},
-];
+    }
+  `,
+};
 
 interface Listing {
 	node: {
@@ -124,11 +122,10 @@ export async function GET(request: Request) {
 			);
 		}
 
-		const data: GraphQLResponse[] = await response.json();
+		const data: GraphQLResponse = await response.json();
 
-		// Extract listings from the response (should be in data[1])
-		const listingsData = data.find((item) => item.data?.node?.listings);
-		if (!listingsData?.data?.node?.listings) {
+		// Extract listings from the response
+		if (!data?.data?.node?.listings) {
 			console.log("[Cron] No listings found");
 			return NextResponse.json({
 				success: true,
@@ -136,7 +133,7 @@ export async function GET(request: Request) {
 			});
 		}
 
-		const listings = listingsData.data.node.listings.edges;
+		const listings = data.data.node.listings.edges;
 
 		// Filter only available tickets and get the cheapest price
 		const availableListings = listings.filter(
