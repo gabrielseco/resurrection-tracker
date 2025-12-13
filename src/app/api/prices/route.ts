@@ -1,4 +1,4 @@
-import { put, head } from "@vercel/blob";
+import { put, head, del, list } from "@vercel/blob";
 import type { TicketData, TicketPrice } from "@/types/ticket";
 import { NextResponse } from "next/server";
 
@@ -20,6 +20,18 @@ async function getData(): Promise<TicketData> {
 
 // Helper function to save data
 async function saveData(data: TicketData): Promise<void> {
+  // Delete existing blob if it exists
+  try {
+    const { blobs } = await list({ prefix: BLOB_FILENAME });
+    for (const blob of blobs) {
+      await del(blob.url);
+    }
+  } catch (error) {
+    // Ignore if blob doesn't exist
+    console.log("No existing blob to delete");
+  }
+
+  // Create new blob
   await put(BLOB_FILENAME, JSON.stringify(data, null, 2), {
     access: "public",
     contentType: "application/json",
