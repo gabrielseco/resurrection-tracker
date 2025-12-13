@@ -1,0 +1,49 @@
+name: Fetch TicketSwap Prices
+
+on:
+  schedule:
+    # Runs every day at 9 AM UTC
+    - cron: "0 9 * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  fetch-prices:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install system dependencies for Puppeteer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libnspr4 \
+            libatk1.0-0 \
+            libatk-bridge2.0-0 \
+            libcups2 \
+            libdrm2 \
+            libxkbcommon0 \
+            libxcomposite1 \
+            libxdamage1 \
+            libxfixes3 \
+            libxrandr2 \
+            libgbm1 \
+            libpango-1.0-0 \
+            libcairo2 \
+            libasound2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch prices
+        run: npm run fetch-prices
+        env:
+          API_URL: https://resurrection-tracker.vercel.app/api/prices
