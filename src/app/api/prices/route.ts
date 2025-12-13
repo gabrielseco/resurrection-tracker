@@ -79,8 +79,27 @@ export async function POST(request: Request) {
     // Get existing data
     const data = await getData();
 
-    // Add new price
-    data.prices.push(newPrice);
+    // Normalize dates to YYYY-MM-DD for comparison
+    const newDate = new Date(newPrice.date).toISOString().split("T")[0];
+
+    // Check if a price already exists for this date and ticket type
+    const existingIndex = data.prices.findIndex((p) => {
+      const existingDate = new Date(p.date).toISOString().split("T")[0];
+      return existingDate === newDate && p.ticketType === newPrice.ticketType;
+    });
+
+    if (existingIndex !== -1) {
+      // Update existing entry instead of creating duplicate
+      data.prices[existingIndex] = {
+        ...newPrice,
+        id: data.prices[existingIndex].id, // Keep the original ID
+      };
+      console.log(`Updated existing price entry for ${newDate} (${newPrice.ticketType})`);
+    } else {
+      // Add new price
+      data.prices.push(newPrice);
+      console.log(`Added new price entry for ${newDate} (${newPrice.ticketType})`);
+    }
 
     // Save back to Blob
     await saveData(data);
