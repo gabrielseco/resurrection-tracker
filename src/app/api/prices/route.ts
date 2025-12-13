@@ -1,16 +1,21 @@
-import { put, head, del, list } from "@vercel/blob";
+import { Redis } from "@upstash/redis";
 import type { TicketData, TicketPrice } from "@/types/ticket";
 import { NextResponse } from "next/server";
 
-const BLOB_FILENAME = "prices.json";
+const REDIS_KEY = "prices";
+
+// Initialize Redis client
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 // Helper function to get existing data
 async function getData(): Promise<TicketData> {
   try {
-    const blob = await head(BLOB_FILENAME);
-    if (blob) {
-      const response = await fetch(blob.url);
-      return await response.json();
+    const data = await redis.get<TicketData>(REDIS_KEY);
+    if (data) {
+      return data;
     }
   } catch (error) {
     console.log("No existing data found, starting fresh");
@@ -20,32 +25,18 @@ async function getData(): Promise<TicketData> {
 
 // Helper function to save data
 async function saveData(data: TicketData): Promise<void> {
-  // Delete existing blob if it exists
-  try {
-    const { blobs } = await list({ prefix: BLOB_FILENAME });
-    for (const blob of blobs) {
-      await del(blob.url);
-    }
-  } catch (error) {
-    // Ignore if blob doesn't exist
-    console.log("No existing blob to delete");
-  }
-
-  // Create new blob
-  await put(BLOB_FILENAME, JSON.stringify(data, null, 2), {
-    access: "public",
-    contentType: "application/json",
-  });
+  // Simple set - no delete needed, instant update!
+  await redis.set(REDIS_KEY, data);
 }
 
 // GET - Fetch all prices
 export async function GET() {
   try {
-    // Check if Blob token is configured
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+    // Check if Redis is configured
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      console.error("Upstash Redis is not configured");
       return NextResponse.json(
-        { error: "Almacenamiento de Blob no configurado. Por favor, agregue almacenamiento de Blob en el panel de Vercel." },
+        { error: "Redis no configurado. Por favor, agregue las credenciales de Upstash Redis." },
         { status: 500 }
       );
     }
@@ -65,11 +56,11 @@ export async function GET() {
 // POST - Add a new price
 export async function POST(request: Request) {
   try {
-    // Check if Blob token is configured
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+    // Check if Redis is configured
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      console.error("Upstash Redis is not configured");
       return NextResponse.json(
-        { error: "Almacenamiento de Blob no configurado. Por favor, agregue almacenamiento de Blob en el panel de Vercel." },
+        { error: "Redis no configurado. Por favor, agregue las credenciales de Upstash Redis." },
         { status: 500 }
       );
     }
@@ -101,7 +92,7 @@ export async function POST(request: Request) {
       console.log(`Added new price entry for ${newDate} (${newPrice.ticketType})`);
     }
 
-    // Save back to Blob
+    // Save back to Redis
     await saveData(data);
 
     return NextResponse.json(data);
@@ -118,11 +109,11 @@ export async function POST(request: Request) {
 // DELETE - Remove a price by id
 export async function DELETE(request: Request) {
   try {
-    // Check if Blob token is configured
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+    // Check if Redis is configured
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      console.error("Upstash Redis is not configured");
       return NextResponse.json(
-        { error: "Almacenamiento de Blob no configurado. Por favor, agregue almacenamiento de Blob en el panel de Vercel." },
+        { error: "Redis no configurado. Por favor, agregue las credenciales de Upstash Redis." },
         { status: 500 }
       );
     }
@@ -140,7 +131,7 @@ export async function DELETE(request: Request) {
     // Remove price
     data.prices = data.prices.filter((p) => p.id !== id);
 
-    // Save back to Blob
+    // Save back to Redis
     await saveData(data);
 
     return NextResponse.json(data);
