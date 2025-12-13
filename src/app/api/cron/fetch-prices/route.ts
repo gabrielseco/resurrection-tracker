@@ -66,6 +66,46 @@ export async function GET(request: Request) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
+		// Test mode - use mock data to avoid rate limiting during development
+		const url = new URL(request.url);
+		const testMode = url.searchParams.get("test") === "true";
+
+		if (testMode) {
+			console.log("[Cron] TEST MODE - Using mock data");
+			const mockPrice = 198.38 + Math.random() * 20; // Random price between 198-218 EUR
+
+			// Save to database
+			const saveResponse = await fetch(
+				`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/prices`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						id: `${Date.now()}-${Math.random()}`,
+						ticketType: "4-day",
+						price: Number(mockPrice.toFixed(2)),
+						notes: "TEST - Mock data",
+						date: new Date().toISOString().split("T")[0],
+					}),
+				},
+			);
+
+			if (!saveResponse.ok) {
+				throw new Error(`Failed to save price: ${saveResponse.status}`);
+			}
+
+			return NextResponse.json({
+				success: true,
+				testMode: true,
+				price: Number(mockPrice.toFixed(2)),
+				currency: "EUR",
+				message: "Test mode - mock data saved successfully",
+				timestamp: new Date().toISOString(),
+			});
+		}
+
 		console.log("[Cron] Fetching prices from TicketSwap...");
 
 		// Fetch data from TicketSwap GraphQL API with retry logic
@@ -170,6 +210,7 @@ export async function GET(request: Request) {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
+					id: `${Date.now()}-${Math.random()}`,
 					ticketType: "4-day",
 					price: priceInEuros,
 					notes: "Auto-fetched from TicketSwap",
