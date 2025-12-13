@@ -10,9 +10,12 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.12",
+    "@vercel/kv": "^3.0.0",
     "next": "16.0.10",
     "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react-dom": "19.2.1",
+    "recharts": "^3.5.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
