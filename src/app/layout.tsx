@@ -14,8 +14,7 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rastreador de Entradas de Resurrección",
-  description: "Rastrear precios de reventa de entradas del festival Resurrection",
+  title: "Holdeo de entradas - Resurrection",
 };
 
 export default function RootLayout({
