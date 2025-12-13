@@ -17,7 +17,8 @@ Track resale prices for Resurrection festival tickets with historical data and p
 - TypeScript
 - Tailwind CSS v4
 - Recharts for graphs
-- Vercel KV (Redis) for data storage
+- TanStack React Query
+- Vercel Blob for data storage
 
 ## Getting Started
 
@@ -29,10 +30,13 @@ Track resale prices for Resurrection festival tickets with historical data and p
    npm install
    ```
 
-3. Set up Vercel KV:
+3. Set up Vercel Blob:
    - Create a Vercel account if you don't have one
-   - Create a new project
-   - Add Vercel KV storage to your project (Storage → KV → Create)
+   - Create a new project and link it:
+     ```bash
+     vercel link
+     ```
+   - Add Vercel Blob storage to your project (Storage → Blob → Create)
    - Pull environment variables:
      ```bash
      vercel env pull
@@ -49,19 +53,21 @@ Track resale prices for Resurrection festival tickets with historical data and p
 
 1. Push your code to GitHub
 2. Import the project in Vercel
-3. Add Vercel KV storage:
+3. Add Vercel Blob storage:
    - Go to your project settings
-   - Navigate to Storage
-   - Create a new KV database (free tier available)
+   - Navigate to **Storage** tab
+   - Click **Create Database**
+   - Select **Blob**
+   - Click **Create** (free tier available)
 4. Deploy
 
-The app will automatically use Vercel KV in production at $0 cost (within free tier limits).
+The app will automatically use Vercel Blob in production at $0 cost (within free tier limits).
 
 ## Free Tier Limits
 
-Vercel KV Free Tier:
-- 256 MB storage
-- 30 MB/month bandwidth
+Vercel Blob Free Tier:
+- 500 MB storage
+- 5 GB bandwidth/month
 - Perfect for this use case
 
 ## Usage

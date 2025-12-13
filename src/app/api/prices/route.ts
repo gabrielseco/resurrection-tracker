@@ -1,14 +1,36 @@
-import { kv } from "@vercel/kv";
+import { put, head } from "@vercel/blob";
 import type { TicketData, TicketPrice } from "@/types/ticket";
 import { NextResponse } from "next/server";
 
-const STORAGE_KEY = "resurrection-prices";
+const BLOB_FILENAME = "prices.json";
+
+// Helper function to get existing data
+async function getData(): Promise<TicketData> {
+  try {
+    const blob = await head(BLOB_FILENAME);
+    if (blob) {
+      const response = await fetch(blob.url);
+      return await response.json();
+    }
+  } catch (error) {
+    console.log("No existing data found, starting fresh");
+  }
+  return { prices: [] };
+}
+
+// Helper function to save data
+async function saveData(data: TicketData): Promise<void> {
+  await put(BLOB_FILENAME, JSON.stringify(data, null, 2), {
+    access: "public",
+    contentType: "application/json",
+  });
+}
 
 // GET - Fetch all prices
 export async function GET() {
   try {
-    const data = await kv.get<TicketData>(STORAGE_KEY);
-    return NextResponse.json(data || { prices: [] });
+    const data = await getData();
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching prices:", error);
     return NextResponse.json(
@@ -24,13 +46,13 @@ export async function POST(request: Request) {
     const newPrice: TicketPrice = await request.json();
 
     // Get existing data
-    const data = (await kv.get<TicketData>(STORAGE_KEY)) || { prices: [] };
+    const data = await getData();
 
     // Add new price
     data.prices.push(newPrice);
 
-    // Save back to KV
-    await kv.set(STORAGE_KEY, data);
+    // Save back to Blob
+    await saveData(data);
 
     return NextResponse.json(data);
   } catch (error) {
@@ -53,13 +75,13 @@ export async function DELETE(request: Request) {
     }
 
     // Get existing data
-    const data = (await kv.get<TicketData>(STORAGE_KEY)) || { prices: [] };
+    const data = await getData();
 
     // Remove price
     data.prices = data.prices.filter((p) => p.id !== id);
 
-    // Save back to KV
-    await kv.set(STORAGE_KEY, data);
+    // Save back to Blob
+    await saveData(data);
 
     return NextResponse.json(data);
   } catch (error) {
