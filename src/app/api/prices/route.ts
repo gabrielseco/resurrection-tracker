@@ -45,7 +45,7 @@ export async function GET() {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       console.error("BLOB_READ_WRITE_TOKEN is not configured");
       return NextResponse.json(
-        { error: "Blob storage not configured. Please add Blob storage in Vercel dashboard." },
+        { error: "Almacenamiento de Blob no configurado. Por favor, agregue almacenamiento de Blob en el panel de Vercel." },
         { status: 500 }
       );
     }
@@ -56,7 +56,7 @@ export async function GET() {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching prices:", errorMessage, error);
     return NextResponse.json(
-      { error: `Failed to fetch prices: ${errorMessage}` },
+      { error: `Error al obtener precios: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       console.error("BLOB_READ_WRITE_TOKEN is not configured");
       return NextResponse.json(
-        { error: "Blob storage not configured. Please add Blob storage in Vercel dashboard." },
+        { error: "Almacenamiento de Blob no configurado. Por favor, agregue almacenamiento de Blob en el panel de Vercel." },
         { status: 500 }
       );
     }
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error adding price:", errorMessage, error);
     return NextResponse.json(
-      { error: `Failed to add price: ${errorMessage}` },
+      { error: `Error al añadir precio: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -103,7 +103,7 @@ export async function DELETE(request: Request) {
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       console.error("BLOB_READ_WRITE_TOKEN is not configured");
       return NextResponse.json(
-        { error: "Blob storage not configured. Please add Blob storage in Vercel dashboard." },
+        { error: "Almacenamiento de Blob no configurado. Por favor, agregue almacenamiento de Blob en el panel de Vercel." },
         { status: 500 }
       );
     }
@@ -112,7 +112,7 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Se requiere ID" }, { status: 400 });
     }
 
     // Get existing data
@@ -129,7 +129,7 @@ export async function DELETE(request: Request) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error deleting price:", errorMessage, error);
     return NextResponse.json(
-      { error: `Failed to delete price: ${errorMessage}` },
+      { error: `Error al eliminar precio: ${errorMessage}` },
       { status: 500 }
     );
   }

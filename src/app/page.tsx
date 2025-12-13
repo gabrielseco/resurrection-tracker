@@ -27,28 +27,25 @@ export default function Home() {
       <div className="mx-auto max-w-6xl px-4 py-8">
         <header className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-            Resurrection Ticket Tracker
+            Holdeo de entradas de Resurrection
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Track resale prices for Resurrection festival tickets
-          </p>
         </header>
 
         {showError && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-800 dark:bg-red-900/20 dark:text-red-400">
-            Failed to process request. Please try again.
+            Error al procesar la solicitud. Por favor, inténtelo de nuevo.
           </div>
         )}
 
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
-            <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+            <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
           </div>
         ) : (
           <div className="space-y-8">
             <div className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
               <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Add New Price
+                Añadir Nuevo Precio
               </h2>
               <PriceForm onAddPrice={handleAddPrice} />
             </div>

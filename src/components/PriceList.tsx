@@ -1,6 +1,7 @@
 "use client";
 
 import type { TicketPrice } from "@/types/ticket";
+import { formatEURPrice } from "@/lib/formatPrice";
 
 interface PriceListProps {
   prices: TicketPrice[];
@@ -16,7 +17,7 @@ export function PriceList({ prices, onDeletePrice }: PriceListProps) {
     return (
       <div className="rounded-lg border border-gray-300 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-900">
         <p className="text-gray-500 dark:text-gray-400">
-          No price entries yet. Add your first entry above.
+          Sin entradas de precio aún. Agrega tu primera entrada arriba.
         </p>
       </div>
     );
@@ -25,7 +26,7 @@ export function PriceList({ prices, onDeletePrice }: PriceListProps) {
   return (
     <div className="space-y-2">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-        Price Entries ({sortedPrices.length})
+        Entradas de Precio ({sortedPrices.length})
       </h3>
       <div className="space-y-2">
         {sortedPrices.map((price) => (
@@ -36,7 +37,7 @@ export function PriceList({ prices, onDeletePrice }: PriceListProps) {
             <div className="flex-1">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  ${price.price.toFixed(2)}
+                  {formatEURPrice(price.price)}
                 </span>
                 <span
                   className={`rounded-full px-2 py-1 text-xs font-medium ${
@@ -45,10 +46,10 @@ export function PriceList({ prices, onDeletePrice }: PriceListProps) {
                       : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
                   }`}
                 >
-                  {price.ticketType === "4-day" ? "4 Day" : "4 Day VIP"}
+                  {price.ticketType === "4-day" ? "4 Días" : "4 Días VIP"}
                 </span>
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {new Date(price.date).toLocaleDateString("en-US", {
+                  {new Date(price.date).toLocaleDateString("es-ES", {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
@@ -65,7 +66,7 @@ export function PriceList({ prices, onDeletePrice }: PriceListProps) {
               type="button"
               onClick={() => onDeletePrice(price.id)}
               className="ml-4 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-              title="Delete entry"
+              title="Eliminar entrada"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

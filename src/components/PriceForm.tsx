@@ -13,7 +13,6 @@ export function PriceForm({ onAddPrice }: PriceFormProps) {
   const [date, setDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [notes, setNotes] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,14 +24,12 @@ export function PriceForm({ onAddPrice }: PriceFormProps) {
       date,
       ticketType,
       price: Number.parseFloat(price),
-      notes: notes || undefined,
     };
 
     onAddPrice(newPrice);
 
     // Reset form
     setPrice("");
-    setNotes("");
   };
 
   return (
@@ -43,7 +40,7 @@ export function PriceForm({ onAddPrice }: PriceFormProps) {
             htmlFor="ticketType"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Ticket Type
+            Tipo de Entrada
           </label>
           <select
             id="ticketType"
@@ -51,8 +48,8 @@ export function PriceForm({ onAddPrice }: PriceFormProps) {
             onChange={(e) => setTicketType(e.target.value as TicketType)}
             className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
           >
-            <option value="4-day">4 Day Pass</option>
-            <option value="4-day-vip">4 Day VIP Pass</option>
+            <option value="4-day">Abono de 4 Días</option>
+            <option value="4-day-vip">Abono VIP de 4 Días</option>
           </select>
         </div>
 
@@ -61,7 +58,7 @@ export function PriceForm({ onAddPrice }: PriceFormProps) {
             htmlFor="date"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Date
+            Fecha
           </label>
           <input
             type="date"
@@ -78,7 +75,7 @@ export function PriceForm({ onAddPrice }: PriceFormProps) {
             htmlFor="price"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Price ($)
+            Precio (€)
           </label>
           <input
             type="number"
@@ -92,30 +89,13 @@ export function PriceForm({ onAddPrice }: PriceFormProps) {
             required
           />
         </div>
-
-        <div>
-          <label
-            htmlFor="notes"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Notes (optional)
-          </label>
-          <input
-            type="text"
-            id="notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="e.g., Stubhub listing"
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-          />
-        </div>
       </div>
 
       <button
         type="submit"
         className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-600"
       >
-        Add Price Entry
+        Enviar
       </button>
     </form>
   );

@@ -41,7 +41,7 @@ export function PriceChart({ prices }: PriceChartProps) {
       const fourDayVip = fourDayVipPrices.find((p) => p.date === date);
 
       return {
-        date: new Date(date).toLocaleDateString("en-US", {
+        date: new Date(date).toLocaleDateString("es-ES", {
           month: "short",
           day: "numeric",
         }),
@@ -54,7 +54,7 @@ export function PriceChart({ prices }: PriceChartProps) {
     return (
       <div className="flex h-64 items-center justify-center rounded-lg border border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
         <p className="text-gray-500 dark:text-gray-400">
-          No price data yet. Add some entries to see the chart.
+          Sin datos de precio aún. Agrega algunas entradas para ver el gráfico.
         </p>
       </div>
     );
@@ -63,14 +63,14 @@ export function PriceChart({ prices }: PriceChartProps) {
   return (
     <div className="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
       <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-        Price History
+        Historial de Precios
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" />
           <YAxis
-            label={{ value: "Price ($)", angle: -90, position: "insideLeft" }}
+            label={{ value: "Precio (€)", angle: -90, position: "insideLeft" }}
           />
           <Tooltip
             contentStyle={{
@@ -83,7 +83,7 @@ export function PriceChart({ prices }: PriceChartProps) {
             type="monotone"
             dataKey="4-day"
             stroke="#3b82f6"
-            name="4 Day Pass"
+            name="Abono de 4 Días"
             strokeWidth={2}
             connectNulls
           />
@@ -91,7 +91,7 @@ export function PriceChart({ prices }: PriceChartProps) {
             type="monotone"
             dataKey="4-day-vip"
             stroke="#8b5cf6"
-            name="4 Day VIP"
+            name="Abono VIP de 4 Días"
             strokeWidth={2}
             connectNulls
           />
