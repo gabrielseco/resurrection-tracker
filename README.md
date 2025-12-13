@@ -5,6 +5,7 @@ Track resale prices for Resurrection festival tickets with historical data and p
 ## Features
 
 - Add ticket prices with dates and notes
+- Automated ticket price scraping from resale sites
 - View price history with interactive charts
 - Track both 4-day and 4-day VIP passes
 - Shared database so everyone sees the same data
@@ -18,7 +19,8 @@ Track resale prices for Resurrection festival tickets with historical data and p
 - Tailwind CSS v4
 - Recharts for graphs
 - TanStack React Query
-- Vercel Blob for data storage
+- Upstash Redis for data storage
+- Puppeteer for automated price scraping
 
 ## Getting Started
 
@@ -30,16 +32,14 @@ Track resale prices for Resurrection festival tickets with historical data and p
    npm install
    ```
 
-3. Set up Vercel Blob:
-   - Create a Vercel account if you don't have one
-   - Create a new project and link it:
+3. Set up Upstash Redis:
+   - Create an Upstash account at https://upstash.com
+   - Create a new Redis database (Global for better performance)
+   - Copy your REST URL and REST Token
+   - Create a `.env.local` file with:
      ```bash
-     vercel link
-     ```
-   - Add Vercel Blob storage to your project (Storage → Blob → Create)
-   - Pull environment variables:
-     ```bash
-     vercel env pull
+     UPSTASH_REDIS_REST_URL=your_redis_url
+     UPSTASH_REDIS_REST_TOKEN=your_redis_token
      ```
 
 4. Run the development server:
@@ -49,25 +49,24 @@ Track resale prices for Resurrection festival tickets with historical data and p
 
 5. Open [http://localhost:3000](http://localhost:3000)
 
-## Deployment to Vercel
+## Deployment
 
 1. Push your code to GitHub
 2. Import the project in Vercel
-3. Add Vercel Blob storage:
+3. Add environment variables in Vercel:
    - Go to your project settings
-   - Navigate to **Storage** tab
-   - Click **Create Database**
-   - Select **Blob**
-   - Click **Create** (free tier available)
+   - Navigate to **Environment Variables**
+   - Add `UPSTASH_REDIS_REST_URL` with your Upstash Redis REST URL
+   - Add `UPSTASH_REDIS_REST_TOKEN` with your Upstash Redis REST Token
 4. Deploy
 
-The app will automatically use Vercel Blob in production at $0 cost (within free tier limits).
+The app will automatically use Upstash Redis in production.
 
 ## Free Tier Limits
 
-Vercel Blob Free Tier:
-- 500 MB storage
-- 5 GB bandwidth/month
+Upstash Redis Free Tier:
+- 10,000 commands/day
+- 256 MB max data size
 - Perfect for this use case
 
 ## Usage
