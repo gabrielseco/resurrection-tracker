@@ -80,22 +80,52 @@ export async function POST(request: Request) {
     });
 
     if (existingIndex !== -1) {
-      // Update existing entry instead of creating duplicate
-      data.prices[existingIndex] = {
-        ...newPrice,
-        id: data.prices[existingIndex].id, // Keep the original ID
-      };
-      console.log(`Updated existing price entry for ${newDate} (${newPrice.ticketType})`);
+      // Price exists for today - only update if new price is cheaper
+      const existingPrice = data.prices[existingIndex].price;
+
+      if (newPrice.price < existingPrice) {
+        // New price is cheaper - update it
+        data.prices[existingIndex] = {
+          ...newPrice,
+          id: data.prices[existingIndex].id, // Keep the original ID
+        };
+        console.log(`Updated price for ${newDate} (${newPrice.ticketType}): ${existingPrice}€ → ${newPrice.price}€ (cheaper)`);
+
+        // Save back to Redis
+        await saveData(data);
+
+        return NextResponse.json({
+          success: true,
+          action: "updated",
+          message: `Price updated to cheaper value: ${newPrice.price}€`,
+          data
+        });
+      } else {
+        // New price is same or higher - discard it
+        console.log(`Discarded price for ${newDate} (${newPrice.ticketType}): ${newPrice.price}€ >= ${existingPrice}€ (not cheaper)`);
+
+        return NextResponse.json({
+          success: true,
+          action: "discarded",
+          message: `Price ${newPrice.price}€ not saved - existing price ${existingPrice}€ is cheaper or equal`,
+          data
+        });
+      }
     } else {
-      // Add new price
+      // No price for today - add new price
       data.prices.push(newPrice);
-      console.log(`Added new price entry for ${newDate} (${newPrice.ticketType})`);
+      console.log(`Added new price entry for ${newDate} (${newPrice.ticketType}): ${newPrice.price}€`);
+
+      // Save back to Redis
+      await saveData(data);
+
+      return NextResponse.json({
+        success: true,
+        action: "added",
+        message: `First price of the day added: ${newPrice.price}€`,
+        data
+      });
     }
-
-    // Save back to Redis
-    await saveData(data);
-
-    return NextResponse.json(data);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error adding price:", errorMessage, error);
