@@ -43,12 +43,14 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-              <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Añadir Nuevo Precio
-              </h2>
-              <PriceForm onAddPrice={handleAddPrice} />
-            </div>
+            {process.env.NODE_ENV !== "production" && (
+              <div className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  Añadir Nuevo Precio
+                </h2>
+                <PriceForm onAddPrice={handleAddPrice} />
+              </div>
+            )}
 
             <PriceChart prices={data?.prices || []} />
 
