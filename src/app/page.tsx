@@ -2,6 +2,7 @@
 
 import { PriceForm } from "@/components/PriceForm";
 import { PriceChart } from "@/components/PriceChart";
+import { PriceAnalytics } from "@/components/PriceAnalytics";
 import { PriceList } from "@/components/PriceList";
 import { usePrices, useAddPrice, useDeletePrice } from "@/hooks/usePrices";
 import type { TicketPrice } from "@/types/ticket";
@@ -53,6 +54,8 @@ export default function Home() {
             )}
 
             <PriceChart prices={data?.prices || []} />
+
+            <PriceAnalytics prices={data?.prices || []} />
 
             <PriceList
               prices={data?.prices || []}
