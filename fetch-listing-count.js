@@ -41,16 +41,16 @@ async function scrapeListingCount() {
     console.log("Waiting for content to load...");
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    const pageTitle = await page.title();
-    const pageUrl = page.url();
-    console.log(`Page title: "${pageTitle}"`);
-    console.log(`Page URL: ${pageUrl}`);
+    const isBlocked = await page.evaluate(() => {
+      const text = document.body.innerText;
+      return text.includes("Iniciar sesión para echar un vistazo") || text.includes("Log in to take a look");
+    });
 
-    const bodyText = await page.evaluate(() => document.body.innerText.slice(0, 500));
-    console.log(`Page body (first 500 chars):\n${bodyText}\n`);
-
-    await page.screenshot({ path: "debug-screenshot.png", fullPage: false });
-    console.log("Screenshot saved to debug-screenshot.png");
+    if (isBlocked) {
+      console.log("Blocked by TicketSwap: login required (rate limited / bot detected). Skipping.");
+      await browser.close();
+      process.exit(0);
+    }
 
     // Click "Mostrar más" until it disappears, waiting for new listings to appear after each click
     let clickCount = 0;
