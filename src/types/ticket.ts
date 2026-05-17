@@ -11,3 +11,15 @@ export interface TicketPrice {
 export interface TicketData {
   prices: TicketPrice[];
 }
+
+export interface ListingCount {
+  id: string;
+  date: string; // ISO date string
+  ticketType: TicketType;
+  totalTickets: number;   // sum of individual ticket quantities
+  totalListings: number;  // number of listing cards
+}
+
+export interface ListingData {
+  listings: ListingCount[];
+}
