@@ -61,13 +61,14 @@ async function scrapeListingCount() {
 
     // Click "Mostrar más" until it disappears, waiting for new listings to appear after each click
     let clickCount = 0;
-    const MAX_CLICKS = 100;
+    const MAX_CLICKS = 20;
     while (clickCount < MAX_CLICKS) {
       const showMoreBtn = await page.$("button.styles_showMoreButton__aEXQc");
       if (!showMoreBtn) break;
 
       const countBefore = await page.$$eval(".styles_link__Jm_hk", (els) => els.length);
       console.log(`Clicking "Mostrar más" (click #${++clickCount}, listings so far: ${countBefore})...`);
+      await showMoreBtn.scrollIntoView();
       await showMoreBtn.click();
 
       // Wait until new listings appear (or timeout after 8s)
