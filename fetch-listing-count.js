@@ -32,6 +32,24 @@ async function scrapeListingCount() {
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     );
 
+    // Intercept GraphQL requests to capture query + variables
+    await page.setRequestInterception(true);
+    page.on("request", (req) => req.continue());
+    page.on("response", async (res) => {
+      if (res.url().includes("/api/graphql/public")) {
+        try {
+          const req = res.request();
+          const body = JSON.parse(req.postData() || "{}");
+          const json = await res.json();
+          console.log("\n--- GraphQL request ---");
+          console.log("Operation:", body.operationName);
+          console.log("Variables:", JSON.stringify(body.variables, null, 2));
+          console.log("Response (truncated):", JSON.stringify(json).slice(0, 500));
+          console.log("---\n");
+        } catch {}
+      }
+    });
+
     console.log("Navigating to TicketSwap...");
     await page.goto(TICKETSWAP_URL, {
       waitUntil: "networkidle2",
