@@ -52,25 +52,16 @@ async function scrapeListingCount() {
       process.exit(0);
     }
 
-    // Click "show more" until it disappears
-    let clickCount = 0;
-    const MAX_CLICKS = 20;
-    while (clickCount < MAX_CLICKS) {
-      const showMoreBtn = await page.$("button.styles_showMoreButton__aEXQc");
-      if (!showMoreBtn) break;
-
-      clickCount++;
-      console.log(`Clicking "Mostrar más" (#${clickCount})...`);
-      await page.evaluate((btn) => btn.scrollIntoView({ block: "center" }), showMoreBtn);
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      await showMoreBtn.click();
-      await page.waitForNetworkIdle({ idleTime: 1000, timeout: 10000 }).catch(() => {});
-    }
-
-    console.log(`Button gone after ${clickCount} clicks, counting listings...`);
-
-    // Count everything from DOM now that all pages are loaded
+    // Try to extract availableTicketsCount from embedded Next.js SSR data
     const { totalListings, totalTickets } = await page.evaluate(() => {
+      const nextData = document.getElementById("__NEXT_DATA__");
+      if (nextData) {
+        const json = JSON.stringify(JSON.parse(nextData.textContent));
+        const match = json.match(/"availableTicketsCount":(\d+)/);
+        const listingsMatch = json.match(/"totalCount":(\d+)/);
+        console.log("__NEXT_DATA__ availableTicketsCount:", match?.[1], "totalCount:", listingsMatch?.[1]);
+      }
+
       const links = document.querySelectorAll(".styles_link__Jm_hk");
       let totalTickets = 0;
       links.forEach((link) => {
