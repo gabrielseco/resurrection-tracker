@@ -32,12 +32,14 @@ async function scrapeListingCount() {
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     );
 
-    let totalListings = 0;
-    let totalTickets = 0;
-    let hasNextPage = true;
-
     await page.setRequestInterception(true);
     page.on("request", (req) => req.continue());
+
+    // GraphQL only fires on "show more" clicks, not on initial SSR page load
+    let hasNextPage = false;
+    let totalListings = 0;
+    let totalTickets = 0;
+
     page.on("response", async (res) => {
       if (!res.url().includes("/api/graphql/public")) return;
       try {
@@ -74,19 +76,37 @@ async function scrapeListingCount() {
       process.exit(0);
     }
 
-    // Click "show more" until hasNextPage is false
+    // Count initial SSR listings from DOM
+    const initial = await page.evaluate(() => {
+      const links = document.querySelectorAll(".styles_link__Jm_hk");
+      let tickets = 0;
+      links.forEach((link) => {
+        const titleEl = link.querySelector("h4.styles_title__cgWBt");
+        if (titleEl) {
+          const match = titleEl.textContent?.match(/(\d+)/);
+          if (match) tickets += parseInt(match[1], 10);
+        }
+      });
+      return { listings: links.length, tickets };
+    });
+    totalListings += initial.listings;
+    totalTickets += initial.tickets;
+    console.log(`Initial SSR listings: ${initial.listings} (${initial.tickets} tickets)`);
+
+    // Paginate via "show more" clicks — GraphQL response updates hasNextPage
     let clickCount = 0;
     const MAX_CLICKS = 100;
-    while (hasNextPage && clickCount < MAX_CLICKS) {
-      const showMoreBtn = await page.$("button.styles_showMoreButton__aEXQc");
-      if (!showMoreBtn) break;
-
+    let showMoreBtn = await page.$("button.styles_showMoreButton__aEXQc");
+    while (showMoreBtn && clickCount < MAX_CLICKS) {
       clickCount++;
       console.log(`Clicking "Mostrar más" (#${clickCount})...`);
       await page.evaluate((btn) => btn.scrollIntoView({ block: "center" }), showMoreBtn);
       await new Promise((resolve) => setTimeout(resolve, 300));
       await showMoreBtn.click();
       await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      if (!hasNextPage) break;
+      showMoreBtn = await page.$("button.styles_showMoreButton__aEXQc");
     }
 
     await browser.close();
