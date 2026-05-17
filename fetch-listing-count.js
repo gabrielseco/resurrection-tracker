@@ -9,31 +9,6 @@ const TICKETSWAP_URL =
 
 const API_URL = process.env.API_URL || "https://resurrection-tracker.vercel.app/api/listings";
 
-function waitForNextListingsResponse(page, timeoutMs = 10000) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      page.off("response", handler);
-      reject(new Error("Timed out waiting for GraphQL response"));
-    }, timeoutMs);
-
-    async function handler(res) {
-      if (!res.url().includes("/api/graphql/public")) return;
-      try {
-        const body = JSON.parse(res.request().postData() || "{}");
-        if (body.operationName !== "getEventTypeListings") return;
-        const data = await res.json();
-        const listings = data.data?.node?.listings;
-        if (!listings) return;
-        clearTimeout(timer);
-        page.off("response", handler);
-        resolve(listings);
-      } catch {}
-    }
-
-    page.on("response", handler);
-  });
-}
-
 async function scrapeListingCount() {
   console.log("Launching browser...");
 
@@ -57,14 +32,32 @@ async function scrapeListingCount() {
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     );
 
+    let totalListings = 0;
+    let totalTickets = 0;
+    let hasNextPage = true;
+
     await page.setRequestInterception(true);
     page.on("request", (req) => req.continue());
+    page.on("response", async (res) => {
+      if (!res.url().includes("/api/graphql/public")) return;
+      try {
+        const body = JSON.parse(res.request().postData() || "{}");
+        if (body.operationName !== "getEventTypeListings") return;
+        const data = await res.json();
+        const listings = data.data?.node?.listings;
+        if (!listings) return;
+        for (const { node } of listings.edges) {
+          totalListings++;
+          totalTickets += node.numberOfAvailableTickets || 0;
+        }
+        hasNextPage = listings.pageInfo?.hasNextPage ?? false;
+        console.log(`  → GraphQL: ${listings.edges.length} listings, hasNextPage: ${hasNextPage}`);
+      } catch {}
+    });
 
     console.log("Navigating to TicketSwap...");
-
-    // Wait for the initial listings response while the page loads
-    const initialResponsePromise = waitForNextListingsResponse(page, 30000);
     await page.goto(TICKETSWAP_URL, { waitUntil: "networkidle2", timeout: 30000 });
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const isBlocked = await page.evaluate(() => {
       const text = document.body.innerText;
@@ -81,21 +74,10 @@ async function scrapeListingCount() {
       process.exit(0);
     }
 
-    let totalListings = 0;
-    let totalTickets = 0;
-
-    // Process initial page load response
-    const initialListings = await initialResponsePromise;
-    for (const { node } of initialListings.edges) {
-      totalListings++;
-      totalTickets += node.numberOfAvailableTickets || 0;
-    }
-    console.log(`Initial load: ${initialListings.edges.length} listings, hasNextPage: ${initialListings.pageInfo.hasNextPage}`);
-
-    // Paginate by clicking "show more" and waiting for each GraphQL response
+    // Click "show more" until hasNextPage is false
     let clickCount = 0;
     const MAX_CLICKS = 100;
-    while (initialListings.pageInfo.hasNextPage && clickCount < MAX_CLICKS) {
+    while (hasNextPage && clickCount < MAX_CLICKS) {
       const showMoreBtn = await page.$("button.styles_showMoreButton__aEXQc");
       if (!showMoreBtn) break;
 
@@ -103,18 +85,8 @@ async function scrapeListingCount() {
       console.log(`Clicking "Mostrar más" (#${clickCount})...`);
       await page.evaluate((btn) => btn.scrollIntoView({ block: "center" }), showMoreBtn);
       await new Promise((resolve) => setTimeout(resolve, 300));
-
-      const nextResponsePromise = waitForNextListingsResponse(page);
       await showMoreBtn.click();
-
-      const nextListings = await nextResponsePromise;
-      for (const { node } of nextListings.edges) {
-        totalListings++;
-        totalTickets += node.numberOfAvailableTickets || 0;
-      }
-      console.log(`  → ${nextListings.edges.length} new listings, hasNextPage: ${nextListings.pageInfo.hasNextPage}`);
-
-      if (!nextListings.pageInfo.hasNextPage) break;
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
     await browser.close();
