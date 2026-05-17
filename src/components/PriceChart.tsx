@@ -17,18 +17,15 @@ interface PriceChartProps {
 }
 
 export function PriceChart({ prices }: PriceChartProps) {
-  // Sort prices by date and prepare data for chart
   const sortedPrices = [...prices].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  // Group by ticket type
   const fourDayPrices = sortedPrices.filter((p) => p.ticketType === "4-day");
   const fourDayVipPrices = sortedPrices.filter(
     (p) => p.ticketType === "4-day-vip"
   );
 
-  // Combine data for chart
   const allDates = new Set([
     ...fourDayPrices.map((p) => p.date),
     ...fourDayVipPrices.map((p) => p.date),
