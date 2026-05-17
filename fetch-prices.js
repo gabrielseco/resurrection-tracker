@@ -49,7 +49,7 @@ async function scrapePrice() {
       const prices = [];
 
       links.forEach((link) => {
-        const priceEl = link.querySelector("strong.css-14yessp, strong.ebnsu0d0");
+        const priceEl = link.querySelector("footer > strong");
         if (priceEl) {
           const match = priceEl.textContent?.match(/(\d+),(\d+)/);
           if (match) {
@@ -60,7 +60,6 @@ async function scrapePrice() {
 
       return { count: links.length, prices };
     });
-
     console.log(`Found ${result.count} listings`);
     console.log(`Prices found: ${result.prices.join(", ")}`);
 
