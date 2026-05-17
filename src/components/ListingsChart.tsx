@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -16,18 +16,18 @@ interface ListingsChartProps {
 }
 
 export function ListingsChart({ listings }: ListingsChartProps) {
-  const chartData = [...listings]
-    .filter((l) => l.ticketType === "4-day")
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map((l) => ({
-      date: new Date(l.date).toLocaleDateString("es-ES", {
-        month: "short",
-        day: "numeric",
-      }),
-      tickets: l.totalTickets,
-    }));
+  const fourDay = listings.filter((l) => l.ticketType === "4-day");
 
-  const latest = chartData[chartData.length - 1];
+  // Group by month, take the last entry of each month as the snapshot
+  const byMonth = new Map<string, number>();
+  for (const l of [...fourDay].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())) {
+    const month = new Date(l.date).toLocaleDateString("es-ES", { year: "numeric", month: "short" });
+    byMonth.set(month, l.totalTickets);
+  }
+
+  const chartData = Array.from(byMonth.entries()).map(([month, tickets]) => ({ month, tickets }));
+
+  const latest = fourDay.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
   if (chartData.length === 0) {
     return (
@@ -45,28 +45,21 @@ export function ListingsChart({ listings }: ListingsChartProps) {
         </h3>
         {latest && (
           <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {latest.tickets} entradas
+            {latest.totalTickets} entradas
           </span>
         )}
       </div>
       <ResponsiveContainer width="100%" height={250}>
-        <LineChart data={chartData}>
+        <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} />
           <Tooltip
             contentStyle={{ backgroundColor: "rgba(255,255,255,0.9)", border: "1px solid #ccc" }}
             formatter={(value: number) => [`${value} entradas`, "Disponibles"]}
           />
-          <Line
-            type="monotone"
-            dataKey="tickets"
-            stroke="#3b82f6"
-            strokeWidth={2}
-            dot={{ r: 4 }}
-            activeDot={{ r: 6 }}
-          />
-        </LineChart>
+          <Bar dataKey="tickets" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
