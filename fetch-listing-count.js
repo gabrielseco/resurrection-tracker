@@ -75,6 +75,10 @@ async function scrapeListingCount() {
 
       const countAfter = await page.$$eval(".styles_link__Jm_hk", (els) => els.length);
       console.log(`  → listings after click: ${countAfter}`);
+      if (countAfter <= countBefore) {
+        console.log("  → count did not increase, stopping pagination.");
+        break;
+      }
     }
 
     console.log(`Expanded all listings after ${clickCount} clicks`);
