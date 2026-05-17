@@ -41,15 +41,25 @@ async function scrapeListingCount() {
     console.log("Waiting for content to load...");
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    // Click "Mostrar más" until it disappears
+    // Click "Mostrar más" until it disappears, waiting for new listings to appear after each click
     let clickCount = 0;
-    while (true) {
+    const MAX_CLICKS = 100;
+    while (clickCount < MAX_CLICKS) {
       const showMoreBtn = await page.$("button.styles_showMoreButton__aEXQc");
       if (!showMoreBtn) break;
 
-      console.log(`Clicking "Mostrar más" (click #${++clickCount})...`);
+      const countBefore = await page.$$eval(".styles_link__Jm_hk", (els) => els.length);
+      console.log(`Clicking "Mostrar más" (click #${++clickCount}, listings so far: ${countBefore})...`);
       await showMoreBtn.click();
-      await page.waitForNetworkIdle({ idleTime: 500, timeout: 5000 }).catch(() => {});
+
+      // Wait until new listings appear (or timeout after 8s)
+      await page
+        .waitForFunction(
+          (prevCount) => document.querySelectorAll(".styles_link__Jm_hk").length > prevCount,
+          { timeout: 8000 },
+          countBefore
+        )
+        .catch(() => {});
     }
 
     console.log(`Expanded all listings after ${clickCount} clicks`);
