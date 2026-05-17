@@ -41,6 +41,17 @@ async function scrapeListingCount() {
     console.log("Waiting for content to load...");
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
+    const pageTitle = await page.title();
+    const pageUrl = page.url();
+    console.log(`Page title: "${pageTitle}"`);
+    console.log(`Page URL: ${pageUrl}`);
+
+    const bodyText = await page.evaluate(() => document.body.innerText.slice(0, 500));
+    console.log(`Page body (first 500 chars):\n${bodyText}\n`);
+
+    await page.screenshot({ path: "debug-screenshot.png", fullPage: false });
+    console.log("Screenshot saved to debug-screenshot.png");
+
     // Click "Mostrar más" until it disappears, waiting for new listings to appear after each click
     let clickCount = 0;
     const MAX_CLICKS = 100;
