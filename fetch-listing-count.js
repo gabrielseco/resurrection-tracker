@@ -52,14 +52,13 @@ async function scrapeListingCount() {
       process.exit(0);
     }
 
-    // Try to extract availableTicketsCount from embedded Next.js SSR data
-    const { totalListings, totalTickets } = await page.evaluate(() => {
-      const nextData = document.getElementById("__NEXT_DATA__");
-      if (nextData) {
-        const json = JSON.stringify(JSON.parse(nextData.textContent));
+    const { totalListings, totalTickets, availableTicketsCount } = await page.evaluate(() => {
+      const nextDataEl = document.getElementById("__NEXT_DATA__");
+      let availableTicketsCount = null;
+      if (nextDataEl) {
+        const json = nextDataEl.textContent;
         const match = json.match(/"availableTicketsCount":(\d+)/);
-        const listingsMatch = json.match(/"totalCount":(\d+)/);
-        console.log("__NEXT_DATA__ availableTicketsCount:", match?.[1], "totalCount:", listingsMatch?.[1]);
+        if (match) availableTicketsCount = parseInt(match[1], 10);
       }
 
       const links = document.querySelectorAll(".styles_link__Jm_hk");
@@ -71,8 +70,10 @@ async function scrapeListingCount() {
           if (match) totalTickets += parseInt(match[1], 10);
         }
       });
-      return { totalListings: links.length, totalTickets };
+      return { totalListings: links.length, totalTickets, availableTicketsCount };
     });
+
+    console.log(`__NEXT_DATA__ availableTicketsCount: ${availableTicketsCount}`);
 
     await browser.close();
 
