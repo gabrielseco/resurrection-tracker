@@ -34,6 +34,7 @@ async function scrapeListingCount() {
 
     console.log("Navigating to TicketSwap...");
     await page.goto(TICKETSWAP_URL, { waitUntil: "networkidle2", timeout: 30000 });
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const isBlocked = await page.evaluate(() =>
       !!document.querySelector('iframe[src="/401"]')
