@@ -55,11 +55,11 @@ export default function Home() {
               </div>
             )}
 
+            <ListingsChart listings={listingsData?.listings || []} />
+
             <PriceChart prices={data?.prices || []} />
 
             <PriceAnalytics prices={data?.prices || []} />
-
-            <ListingsChart listings={listingsData?.listings || []} />
 
             <PriceList
               prices={data?.prices || []}

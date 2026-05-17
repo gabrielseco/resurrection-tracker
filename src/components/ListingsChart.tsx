@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -16,18 +16,18 @@ interface ListingsChartProps {
 }
 
 export function ListingsChart({ listings }: ListingsChartProps) {
-  const fourDay = listings.filter((l) => l.ticketType === "4-day");
+  const chartData = listings
+    .filter((l) => l.ticketType === "4-day")
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((l) => ({
+      date: new Date(l.date).toLocaleDateString("es-ES", {
+        month: "short",
+        day: "numeric",
+      }),
+      tickets: l.totalTickets,
+    }));
 
-  // Group by month, take the last entry of each month as the snapshot
-  const byMonth = new Map<string, number>();
-  for (const l of [...fourDay].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())) {
-    const month = new Date(l.date).toLocaleDateString("es-ES", { year: "numeric", month: "short" });
-    byMonth.set(month, l.totalTickets);
-  }
-
-  const chartData = Array.from(byMonth.entries()).map(([month, tickets]) => ({ month, tickets }));
-
-  const latest = fourDay.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const latest = chartData[chartData.length - 1];
 
   if (chartData.length === 0) {
     return (
@@ -40,26 +40,33 @@ export function ListingsChart({ listings }: ListingsChartProps) {
   return (
     <div className="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
       <div className="mb-4 flex items-baseline justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
           Entradas disponibles en TicketSwap
         </h3>
         {latest && (
           <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {latest.totalTickets} entradas
+            {latest.tickets} entradas
           </span>
         )}
       </div>
-      <ResponsiveContainer width="100%" height={250}>
-        <BarChart data={chartData}>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 12 }} />
+          <XAxis dataKey="date" />
+          <YAxis label={{ value: "Entradas", angle: -90, position: "insideLeft" }} />
           <Tooltip
-            contentStyle={{ backgroundColor: "rgba(255,255,255,0.9)", border: "1px solid #ccc" }}
+            contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", border: "1px solid #ccc" }}
             formatter={(value: number) => [`${value} entradas`, "Disponibles"]}
           />
-          <Bar dataKey="tickets" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-        </BarChart>
+          <Line
+            type="monotone"
+            dataKey="tickets"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            dot={{ r: 4 }}
+            connectNulls
+          />
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );
