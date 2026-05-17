@@ -4,11 +4,13 @@ import { PriceForm } from "@/components/PriceForm";
 import { PriceChart } from "@/components/PriceChart";
 import { PriceAnalytics } from "@/components/PriceAnalytics";
 import { PriceList } from "@/components/PriceList";
-import { usePrices, useAddPrice, useDeletePrice } from "@/hooks/usePrices";
+import { ListingsChart } from "@/components/ListingsChart";
+import { usePrices, useAddPrice, useDeletePrice, useListings } from "@/hooks/usePrices";
 import type { TicketPrice } from "@/types/ticket";
 
 export default function Home() {
   const { data, isLoading, error } = usePrices();
+  const { data: listingsData } = useListings();
   const addPriceMutation = useAddPrice();
   const deletePriceMutation = useDeletePrice();
 
@@ -52,6 +54,8 @@ export default function Home() {
                 <PriceForm onAddPrice={handleAddPrice} />
               </div>
             )}
+
+            <ListingsChart listings={listingsData?.listings || []} />
 
             <PriceChart prices={data?.prices || []} />
 

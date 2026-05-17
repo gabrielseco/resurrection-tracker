@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { TicketData, TicketPrice } from "@/types/ticket";
-import { fetchPrices, addPrice, deletePrice } from "@/lib/storage";
+import type { TicketData, TicketPrice, ListingData } from "@/types/ticket";
+import { fetchPrices, addPrice, deletePrice, fetchListings } from "@/lib/storage";
 
 const PRICES_KEY = ["prices"];
 
@@ -30,5 +30,12 @@ export function useDeletePrice() {
     onSuccess: (data) => {
       queryClient.setQueryData(PRICES_KEY, data);
     },
+  });
+}
+
+export function useListings() {
+  return useQuery<ListingData>({
+    queryKey: ["listings"],
+    queryFn: fetchListings,
   });
 }

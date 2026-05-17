@@ -42,3 +42,9 @@ export async function exportToJSON(): Promise<string> {
   const data = await fetchPrices();
   return JSON.stringify(data, null, 2);
 }
+
+export async function fetchListings(): Promise<import("@/types/ticket").ListingData> {
+  const response = await fetch("/api/listings", { cache: "no-store" });
+  if (!response.ok) throw new Error("Failed to fetch listings");
+  return response.json();
+}
