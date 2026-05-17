@@ -62,6 +62,7 @@ async function scrapeListingCount() {
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const isBlocked = await page.evaluate(() => {
+      if (document.querySelector('iframe[src="/401"]')) return true;
       const text = document.body.innerText;
       return (
         text.includes("Iniciar sesión para echar un vistazo") ||
@@ -75,6 +76,15 @@ async function scrapeListingCount() {
       await browser.close();
       process.exit(0);
     }
+
+    const pageTitle = await page.title();
+    const pageUrl = page.url();
+    console.log(`Title: "${pageTitle}"`);
+    console.log(`URL: ${pageUrl}`);
+    const bodySnippet = await page.evaluate(() => document.body.innerHTML.slice(0, 2000));
+    console.log(`Body HTML (first 2000 chars):\n${bodySnippet}\n`);
+    await page.screenshot({ path: "debug-screenshot.png" });
+    console.log("Screenshot saved to debug-screenshot.png");
 
     // Count initial SSR listings from DOM
     const initial = await page.evaluate(() => {
