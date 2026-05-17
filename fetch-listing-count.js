@@ -34,17 +34,10 @@ async function scrapeListingCount() {
 
     console.log("Navigating to TicketSwap...");
     await page.goto(TICKETSWAP_URL, { waitUntil: "networkidle2", timeout: 30000 });
-    await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    const isBlocked = await page.evaluate(() => {
-      if (document.querySelector('iframe[src="/401"]')) return true;
-      const text = document.body.innerText;
-      return (
-        text.includes("Iniciar sesión para echar un vistazo") ||
-        text.includes("Log in to take a look") ||
-        text.includes("debes iniciar sesión")
-      );
-    });
+    const isBlocked = await page.evaluate(() =>
+      !!document.querySelector('iframe[src="/401"]')
+    );
 
     if (isBlocked) {
       console.log("Blocked by TicketSwap: login required. Skipping.");
@@ -52,35 +45,25 @@ async function scrapeListingCount() {
       process.exit(0);
     }
 
-    const { totalListings, totalTickets, availableTicketsCount } = await page.evaluate(() => {
+    const { totalTickets, totalListings } = await page.evaluate(() => {
       const nextDataEl = document.getElementById("__NEXT_DATA__");
-      let availableTicketsCount = null;
-      if (nextDataEl) {
-        const json = nextDataEl.textContent;
-        const match = json.match(/"availableTicketsCount":(\d+)/);
-        if (match) availableTicketsCount = parseInt(match[1], 10);
-      }
+      if (!nextDataEl) return { totalTickets: 0, totalListings: 0 };
+
+      const json = nextDataEl.textContent;
+
+      const ticketsMatch = json.match(/"availableTicketsCount":(\d+)/);
+      const totalTickets = ticketsMatch ? parseInt(ticketsMatch[1], 10) : 0;
 
       const links = document.querySelectorAll(".styles_link__Jm_hk");
-      let totalTickets = 0;
-      links.forEach((link) => {
-        const titleEl = link.querySelector("h4.styles_title__cgWBt");
-        if (titleEl) {
-          const match = titleEl.textContent?.match(/(\d+)/);
-          if (match) totalTickets += parseInt(match[1], 10);
-        }
-      });
-      return { totalListings: links.length, totalTickets, availableTicketsCount };
+      return { totalTickets, totalListings: links.length };
     });
-
-    console.log(`__NEXT_DATA__ availableTicketsCount: ${availableTicketsCount}`);
 
     await browser.close();
 
     console.log(`Found ${totalListings} listings with ${totalTickets} total tickets`);
 
-    if (totalListings === 0) {
-      console.log("No listings found — skipping API call.");
+    if (totalTickets === 0) {
+      console.log("No data found — skipping API call.");
       process.exit(0);
     }
 
