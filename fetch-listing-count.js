@@ -42,8 +42,15 @@ async function scrapeListingCount() {
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const isBlocked = await page.evaluate(() => {
+      // Check for login wall button or known blocked page text
+      const hasLoginButton = !!document.querySelector("a[href*='login'], button[data-testid='login']");
       const text = document.body.innerText;
-      return text.includes("Iniciar sesión para echar un vistazo") || text.includes("Log in to take a look");
+      return (
+        hasLoginButton ||
+        text.includes("Iniciar sesión para echar un vistazo") ||
+        text.includes("Log in to take a look") ||
+        text.includes("debes iniciar sesión")
+      );
     });
 
     if (isBlocked) {
@@ -96,6 +103,12 @@ async function scrapeListingCount() {
     });
 
     console.log(`Found ${result.totalListings} listings with ${result.totalTickets} total tickets`);
+
+    if (result.totalListings === 0) {
+      console.log("No listings found — likely blocked or page failed to load. Skipping API call.");
+      await browser.close();
+      process.exit(0);
+    }
 
     await sendCountToAPI(result.totalTickets, result.totalListings);
 
