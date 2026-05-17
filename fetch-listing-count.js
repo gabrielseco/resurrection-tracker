@@ -54,7 +54,7 @@ async function scrapeListingCount() {
 
     // Click "show more" until it disappears
     let clickCount = 0;
-    const MAX_CLICKS = 100;
+    const MAX_CLICKS = 20;
     while (clickCount < MAX_CLICKS) {
       const showMoreBtn = await page.$("button.styles_showMoreButton__aEXQc");
       if (!showMoreBtn) break;
@@ -64,7 +64,7 @@ async function scrapeListingCount() {
       await page.evaluate((btn) => btn.scrollIntoView({ block: "center" }), showMoreBtn);
       await new Promise((resolve) => setTimeout(resolve, 500));
       await showMoreBtn.click();
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await page.waitForNetworkIdle({ idleTime: 1000, timeout: 10000 }).catch(() => {});
     }
 
     console.log(`Button gone after ${clickCount} clicks, counting listings...`);
