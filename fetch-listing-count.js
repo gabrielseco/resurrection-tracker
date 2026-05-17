@@ -38,14 +38,8 @@ async function scrapeListingCount() {
       timeout: 30000,
     });
 
-    console.log("Waiting for listings to appear...");
-    try {
-      await page.waitForSelector(".styles_link__Jm_hk", { timeout: 15000 });
-    } catch {
-      // Take a screenshot to help debug if listings never appear
-      await page.screenshot({ path: "debug-listing-count.png" });
-      console.log("Listings not found within 15s — saved debug-listing-count.png");
-    }
+    console.log("Waiting for content to load...");
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // Click "Mostrar más" until it disappears
     let clickCount = 0;
