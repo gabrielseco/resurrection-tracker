@@ -20,41 +20,13 @@ jobs:
           node-version: "24"
           cache: "npm"
 
-      - name: Install system dependencies for Puppeteer
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libnss3 \
-            libnspr4 \
-            libatk1.0-0 \
-            libatk-bridge2.0-0 \
-            libcups2 \
-            libdrm2 \
-            libxkbcommon0 \
-            libxcomposite1 \
-            libxdamage1 \
-            libxfixes3 \
-            libxrandr2 \
-            libgbm1 \
-            libpango-1.0-0 \
-            libcairo2 \
-            libasound2t64
-
-      - name: Cache Puppeteer browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/puppeteer
-          key: puppeteer-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
       - name: Install dependencies
         run: npm ci
         env:
           PUPPETEER_SKIP_DOWNLOAD: "true"
 
-      - name: Install Puppeteer Chrome
-        run: node node_modules/puppeteer/install.mjs
-
       - name: Fetch listing count
         run: npm run fetch-listing-count
         env:
           API_URL: https://resurrection-tracker.vercel.app/api/listings
+          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome-stable
