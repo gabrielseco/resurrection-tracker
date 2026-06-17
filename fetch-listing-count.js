@@ -63,11 +63,6 @@ async function scrapeListingCount() {
 
     console.log(`Found ${totalListings} listings with ${totalTickets} total tickets`);
 
-    if (totalListings === 0) {
-      const bodyHtml = await page.evaluate(() => document.body.innerHTML.slice(0, 3000));
-      console.log("DEBUG: No listings found. Body snippet:\n", bodyHtml);
-    }
-
     if (totalTickets === 0) {
       console.log("No data found — skipping API call.");
       process.exit(0);
