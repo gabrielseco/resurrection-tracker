@@ -8,8 +8,7 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "fetch-prices": "node fetch-prices.js",
-    "fetch-listing-count": "node fetch-listing-count.js"
+    "fetch-ticketswap": "node fetch-ticketswap-zyte.js"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.12",
@@ -27,9 +26,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
-    "puppeteer": "^23.11.0",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
