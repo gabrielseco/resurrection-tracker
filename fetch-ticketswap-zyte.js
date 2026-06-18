@@ -22,6 +22,13 @@ async function scrape() {
     body: JSON.stringify({
       url: TICKETSWAP_URL,
       browserHtml: true,
+      actions: [
+        {
+          action: "waitForSelector",
+          selector: { type: "css", value: "[class*=pricing]" },
+          timeout: 15,
+        },
+      ],
     }),
     signal: AbortSignal.timeout(90000),
   });
@@ -50,35 +57,24 @@ async function scrape() {
   const ticketsMatch = nextDataJson.match(/"availableTicketsCount":(\d+)/);
   const totalTickets = ticketsMatch ? parseInt(ticketsMatch[1], 10) : 0;
 
-  const listingMatches = html.match(/class="[^"]*styles_link__Jm_hk[^"]*"/g);
+  const listingMatches = html.match(/class="[^"]*styles_link__\w+[^"]*"/g);
   const totalListings = listingMatches ? listingMatches.length : 0;
 
   console.log(`Found ${totalListings} listings with ${totalTickets} total tickets`);
 
   // --- Prices ---
-  const listingRegex =
-    /class="[^"]*styles_link__Jm_hk[^"]*"[\s\S]*?<footer[\s\S]*?<strong[^>]*>([\s\S]*?)<\/strong>/g;
-
+  const pricingRegex = /class="[^"]*styles_pricing__\w+[^"]*"[^>]*>(\d+),(\d+)/g;
   const prices = [];
   let match;
-  while ((match = listingRegex.exec(html)) !== null) {
-    const priceMatch = match[1].match(/(\d+),(\d+)/);
-    if (priceMatch) {
-      prices.push(parseFloat(`${priceMatch[1]}.${priceMatch[2]}`));
-    }
+  while ((match = pricingRegex.exec(html)) !== null) {
+    prices.push(parseFloat(`${match[1]}.${match[2]}`));
   }
 
-  // Fallback: try extracting prices from __NEXT_DATA__ JSON
   if (prices.length === 0) {
-    const priceRegex = /"price":{"amount":(\d+),"currency"/g;
-    let jsonMatch;
-    while ((jsonMatch = priceRegex.exec(nextDataJson)) !== null) {
-      const cents = parseInt(jsonMatch[1], 10);
-      prices.push(cents / 100);
-    }
+    console.log("No prices found in HTML or __NEXT_DATA__");
+  } else {
+    console.log(`Prices found: ${prices.join("€, ")}€`);
   }
-
-  console.log(`Prices found: ${prices.join(", ")}`);
 
   const cheapestPrice = prices.length > 0 ? Math.min(...prices) : null;
   if (cheapestPrice !== null) {
@@ -98,6 +94,7 @@ async function sendListingCount(totalTickets, totalListings) {
   };
 
   console.log("\nSending listing count to API...");
+  console.log(`  payload: ${JSON.stringify(payload)}`);
   const response = await fetch(`${BASE_API_URL}/api/listings`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -122,6 +119,7 @@ async function sendPrice(price) {
   };
 
   console.log("Sending price to API...");
+  console.log(`  payload: ${JSON.stringify(payload)}`);
   const response = await fetch(`${BASE_API_URL}/api/prices`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
