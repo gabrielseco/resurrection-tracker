@@ -62,12 +62,19 @@ async function scrape() {
 
   console.log(`Found ${totalListings} listings with ${totalTickets} total tickets`);
 
-  // --- Prices ---
-  const pricingRegex = /class="[^"]*styles_pricing__\w+[^"]*"[^>]*>(\d+),(\d+)/g;
+  // --- Prices (only from available listings, not sold ones) ---
+  // Available listings are wrapped in <a> tags; sold listings use plain <div>
+  // with a "cardUnavailable" class. We extract prices only from <a> blocks.
+  const availableListingRegex = /<a\s[^>]*class="[^"]*link[^"]*"[^>]*>[\s\S]*?<\/a>/g;
+  const pricingInListingRegex = /class="[^"]*pricing[^"]*"[^>]*>(\d+),(\d+)/;
   const prices = [];
   let match;
-  while ((match = pricingRegex.exec(html)) !== null) {
-    prices.push(parseFloat(`${match[1]}.${match[2]}`));
+  while ((match = availableListingRegex.exec(html)) !== null) {
+    const listingHtml = match[0];
+    const priceMatch = pricingInListingRegex.exec(listingHtml);
+    if (priceMatch) {
+      prices.push(parseFloat(`${priceMatch[1]}.${priceMatch[2]}`));
+    }
   }
 
   if (prices.length === 0) {
