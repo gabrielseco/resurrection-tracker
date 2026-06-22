@@ -141,7 +141,21 @@ async function sendPrice(price) {
   console.log("✓ Price saved");
 }
 
-scrape()
+async function scrapeWithRetries(maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await scrape();
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+      const delay = attempt * 10;
+      console.log(`\n⚠ Attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+      console.log(`  Retrying in ${delay}s...`);
+      await new Promise((r) => setTimeout(r, delay * 1000));
+    }
+  }
+}
+
+scrapeWithRetries()
   .then(async ({ totalTickets, totalListings, cheapestPrice }) => {
     if (totalTickets === 0) {
       console.log("No tickets found — skipping API calls.");
