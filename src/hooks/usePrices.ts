@@ -26,7 +26,7 @@ export function useDeletePrice() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => deletePrice(id),
+    mutationFn: (id: string | number) => deletePrice(id),
     onSuccess: (data) => {
       queryClient.setQueryData(PRICES_KEY, data);
     },

@@ -27,7 +27,7 @@ export async function addPrice(price: TicketPrice): Promise<TicketData> {
 }
 
 // Delete a price via the API
-export async function deletePrice(id: string): Promise<TicketData> {
+export async function deletePrice(id: string | number): Promise<TicketData> {
   const response = await fetch(`/api/prices?id=${id}`, {
     method: "DELETE",
   });

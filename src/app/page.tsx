@@ -18,7 +18,7 @@ export default function Home() {
     addPriceMutation.mutate(price);
   }
 
-  function handleDeletePrice(id: string) {
+  function handleDeletePrice(id: string | number) {
     deletePriceMutation.mutate(id);
   }
 
