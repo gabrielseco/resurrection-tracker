@@ -26,3 +26,4 @@ jobs:
         run: npm run fetch-ticketswap
         env:
           ZYTE_API_KEY: ${{ secrets.ZYTE_API_KEY }}
+          RESURRECTION_API_KEY: ${{ secrets.RESURRECTION_API_KEY }}

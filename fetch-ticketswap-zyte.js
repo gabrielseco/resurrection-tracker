@@ -4,12 +4,15 @@ const TICKETSWAP_URL =
   "https://www.ticketswap.es/event/resurrection-fest-2026/4-day-ticket-tickets/0a722a0d-6e0d-44a1-a134-0e42bc43f003/4997727";
 
 const ZYTE_API_KEY = process.env.ZYTE_API_KEY;
-const BASE_API_URL =
-  process.env.API_URL || "https://resurrection-tracker.vercel.app";
+const BASE_API_URL = process.env.API_URL || "https://resurrection-api.fly.dev";
+const RESURRECTION_API_KEY = process.env.RESURRECTION_API_KEY;
 
 async function scrape() {
   if (!ZYTE_API_KEY) {
     throw new Error("ZYTE_API_KEY environment variable is required");
+  }
+  if (!RESURRECTION_API_KEY) {
+    throw new Error("RESURRECTION_API_KEY environment variable is required");
   }
 
   console.log("Fetching page via Zyte API...");
@@ -104,7 +107,10 @@ async function sendListingCount(totalTickets, totalListings) {
   console.log(`  payload: ${JSON.stringify(payload)}`);
   const response = await fetch(`${BASE_API_URL}/api/listings`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${RESURRECTION_API_KEY}`,
+    },
     body: JSON.stringify(payload),
   });
 
@@ -129,7 +135,10 @@ async function sendPrice(price) {
   console.log(`  payload: ${JSON.stringify(payload)}`);
   const response = await fetch(`${BASE_API_URL}/api/prices`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${RESURRECTION_API_KEY}`,
+    },
     body: JSON.stringify(payload),
   });
 

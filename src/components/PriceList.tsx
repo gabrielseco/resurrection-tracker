@@ -5,7 +5,7 @@ import { formatEURPrice } from "@/lib/formatPrice";
 
 interface PriceListProps {
   prices: TicketPrice[];
-  onDeletePrice: (id: string) => void;
+  onDeletePrice: (id: string | number) => void;
 }
 
 export function PriceList({ prices, onDeletePrice }: PriceListProps) {
